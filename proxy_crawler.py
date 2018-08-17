@@ -7,17 +7,19 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 @trip.coroutine
 def get_proxies():
     """
-    爬代理网站的函数
+    this function is to get proxies from publishing websites. Used python module trip, which is a combination of requests and tornado,
+    can handle requests with multi-coroutine. We have to be careful of the max TCP packages that the machine can send, cause this function
+    consume all TCP packages sending quantity. 
     """
-    global ITL#协助遍历URL_SET的常数，因为需要在这个函数里改动，所以需要在这里global声明一下。
-    this_web_has = 0#用来记录这个网站有多少个代理的信息，记录所有的代理数量，包括不好用的。
-    ITL += 1 #用来遍历URL_SET。
-    #下面这句是正则表达式，能找到IP和端口信息。
+    global ITL#used to iterate URL_SET
+    this_web_has = 0#the total number of proxies this web page has.
+    ITL += 1 
+    #re for IP and Port infomation, eg"127.0.0.1:8080".
     pi = r'(?:((?:\d|[1-9]\d|1\d{2}|2[0-5][0-5])\.(?:\d|[1-9]\d|1\d{2}|2[0-5][0-5])\.(?:\d|[1-9]\d|1\d{2}|2[0-5][0-5])\.(?:\d|[1-9]\d|1\d{2}|2[0-5][0-5]))\D+?(6[0-5]{2}[0-3][0-5]|[1-5]\d{4}|[1-9]\d{1,3}|[0-9]))'
-    ipandportlist = []#装找到的代理，回头会返回。
+    ipandportlist = []
     print(URL_SET[ITL])
     try:
-        r = yield trip.get(URL_SET[ITL], timeout=30, headers=header)
+        r = yield trip.get(URL_SET[ITL], timeout=30, headers=header)#used trip.
         p = re.findall(pi, r.text)
         for each in p:
             str1 = str(each)
@@ -37,7 +39,9 @@ def get_proxies():
 @trip.coroutine
 def test_proxy(proxy):
     """
-    Used global var valid_proxy,this function tests proxy using trip
+    This function is used to test if the proxy server is still in service. We send every proxy candidate a request to get web
+    page 'http://httpbin.org/get' for us. If the correct web page is returned then this proxy pass 
+    test.This function also used trip to max its speed. 
     """
     global valid_proxy
     try:
@@ -70,6 +74,9 @@ def getip(list):
         IPlist.append(oneip2)
         PORTlist.append(oneip1[1])
 def ASN(oneIP):
+    """
+    function to get one single IP to help us look at its ASN.
+    """
     str1 = str(oneIP)
     net = Net(str1)
     obj = IPASN(net)
@@ -79,6 +86,10 @@ def ASN(oneIP):
 def getASN(oneIP):
     putin(next(ASN(oneIP)))
 def putin(results):
+    """
+    Function to put together the ASN info we get and make a list. Later, this list will be made into pandas
+    forms and output as .csv files.
+    """
     global ASNlist
     global ASNinfolist
     result = results
@@ -88,6 +99,9 @@ def putin(results):
     ASNinfolist.append(ASNinfo)
 if __name__ == '__main__':
     start_time = time.time()
+    """
+    Those are the free proxies publishing websites we have now. They will be passed to getproxy() to extrated useful proxies.
+    """
     URL_SET = ['https://31f.cn/city/%E6%B7%B1%E5%9C%B3/','https://31f.cn/region/浙江','https://31f.cn/region/北京/','https://31f.cn/region/广东/#',
            'https://31f.cn/region/安徽/','http://www.31f.cn', 'https://free-proxy-list.net/anonymous-proxy.html', 'http://www.mimiip.com/gngao/1',
            'http://www.mimiip.com/gngao/2','http://www.mimiip.com/gngao/3','http://www.mimiip.com/gngao/4',
@@ -97,18 +111,25 @@ if __name__ == '__main__':
            'https://free-proxy-list.net/anonymous-proxy.html', 'https://www.proxynova.com/proxy-server-list/country-us/',
            'https://www.ip-adress.com/proxy-list','https://www.proxynova.com/proxy-server-list/', 'http://www.proxy-daily.com/',
            'https://www.ip-adress.com/proxy-list','http://202.112.51.31:5010/get_all/','http://www.data5u.com/','http://www.goubanjia.com/']
+    """
+    Those are the initilizing files. Including:
+    a header for all requests we gonna make. 
+    a localtime for file naming.
+    a group of list to teporarily store info we ger in the process and help to make our output files.
+    """
     header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36'}
-    localtime = str(datetime.datetime.now().year) + str(datetime.datetime.now().month) + str(datetime.datetime.now().day)#用来给文件命名。
-    ITL = 0#用来协助遍历URL_SET的常量，用这个常量的原因是，用trip这个协程库之后，不太好往get_proxies()这个函数里面传参。应该可以改进。
-    #下面四个list是，如果最后需要传出一个包含 "IP PORT ASN ASNinfo" 所有信息的文件，这四个list分别用来装四项信息。
+    localtime = str(datetime.datetime.now().year) + str(datetime.datetime.now().month) + str(datetime.datetime.now().day)#used to name files.
+    ITL = 0
     ASNinfolist = []
     ASNlist = []
     PORTlist = []
     IPlist = [] 
-    valid_proxy = []#用来装可以用的代理。
-
-    j = open('allproxy.txt', 'r')  # 这份文件中包含了上一次抓取所获得的代理。
-    allproxy = j.readlines()  # 读。
+    valid_proxy = []
+    """
+    These lines does the job of reading the proxies we got yesterday and re-test them.
+    """
+    j = open('allproxy.txt', 'r')  
+    allproxy = j.readlines()
     for n in range(0,len(URL_SET)):
         if ITL <= len(URL_SET)-2:
             trip.run(main)
@@ -116,17 +137,23 @@ if __name__ == '__main__':
     trip.run(test_only)
     valid_proxy = list(set(valid_proxy))
     j.close()
-           
+    """
+    Write all useful IPs into "allproxy.txt" file.
+    """
     f = open('allproxy.txt', 'w')
     for each in valid_proxy:
         f.write(each+'\n')
     f.close()
-           
+    """
+    Used asyncio to speed up the process of checking ASN info.
+    """      
     loop = asyncio.get_event_loop()
     tasks = [getASN(host) for host in IPlist]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
-           
+    """
+    make output files.
+    """  
     IP_alive = pd.DataFrame({'IP': IPlist})
     Port_alive = pd.DataFrame({'PORT': PORTlist})
     ASN_alive = pd.DataFrame({'ASN': ASNlist})
