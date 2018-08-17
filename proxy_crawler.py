@@ -4,26 +4,6 @@ from ipwhois.net import Net
 from ipwhois.asn import IPASN
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-URL_SET = ['https://31f.cn/city/%E6%B7%B1%E5%9C%B3/','https://31f.cn/region/浙江','https://31f.cn/region/北京/','https://31f.cn/region/广东/#',
-           'https://31f.cn/region/安徽/','http://www.31f.cn', 'https://free-proxy-list.net/anonymous-proxy.html', 'http://www.mimiip.com/gngao/1',
-           'http://www.mimiip.com/gngao/2','http://www.mimiip.com/gngao/3','http://www.mimiip.com/gngao/4',
-           'http://www.mimiip.com/gngao/5','http://www.mimiip.com/gngao/6','https://www.us-proxy.org/','https://www.kuaidaili.com/free/inha/2/',
-           'https://www.kuaidaili.com/free/inha/3/','https://www.kuaidaili.com/free/inha/4/','https://www.kuaidaili.com/free/inha/5/',
-           'https://www.kuaidaili.com/free/intr/5/','http://www.ip181.com/','https://www.free-proxy-list.net/',
-           'https://free-proxy-list.net/anonymous-proxy.html', 'https://www.proxynova.com/proxy-server-list/country-us/',
-           'https://www.ip-adress.com/proxy-list','https://www.proxynova.com/proxy-server-list/', 'http://www.proxy-daily.com/',
-           'https://www.ip-adress.com/proxy-list','http://202.112.51.31:5010/get_all/','http://www.data5u.com/','http://www.goubanjia.com/']
-header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36'}
-localtime = str(datetime.datetime.now().year) + str(datetime.datetime.now().month) + str(datetime.datetime.now().day)#用来给文件命名。
-ITL = 0#用来协助遍历URL_SET的常量，用这个常量的原因是，用trip这个协程库之后，不太好往get_proxies()这个函数里面传参。应该可以改进。
-#下面四个list是，如果最后需要传出一个包含 "IP PORT ASN ASNinfo" 所有信息的文件，这四个list分别用来装四项信息。
-ASNinfolist = []
-ASNlist = []
-PORTlist = []
-IPlist = []
-valid_proxy = []#用来装可以用的代理。
-
-
 @trip.coroutine
 def get_proxies():
     """
@@ -108,28 +88,45 @@ def putin(results):
     ASNinfolist.append(ASNinfo)
 if __name__ == '__main__':
     start_time = time.time()
+    URL_SET = ['https://31f.cn/city/%E6%B7%B1%E5%9C%B3/','https://31f.cn/region/浙江','https://31f.cn/region/北京/','https://31f.cn/region/广东/#',
+           'https://31f.cn/region/安徽/','http://www.31f.cn', 'https://free-proxy-list.net/anonymous-proxy.html', 'http://www.mimiip.com/gngao/1',
+           'http://www.mimiip.com/gngao/2','http://www.mimiip.com/gngao/3','http://www.mimiip.com/gngao/4',
+           'http://www.mimiip.com/gngao/5','http://www.mimiip.com/gngao/6','https://www.us-proxy.org/','https://www.kuaidaili.com/free/inha/2/',
+           'https://www.kuaidaili.com/free/inha/3/','https://www.kuaidaili.com/free/inha/4/','https://www.kuaidaili.com/free/inha/5/',
+           'https://www.kuaidaili.com/free/intr/5/','http://www.ip181.com/','https://www.free-proxy-list.net/',
+           'https://free-proxy-list.net/anonymous-proxy.html', 'https://www.proxynova.com/proxy-server-list/country-us/',
+           'https://www.ip-adress.com/proxy-list','https://www.proxynova.com/proxy-server-list/', 'http://www.proxy-daily.com/',
+           'https://www.ip-adress.com/proxy-list','http://202.112.51.31:5010/get_all/','http://www.data5u.com/','http://www.goubanjia.com/']
+    header = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.78 Safari/537.36'}
+    localtime = str(datetime.datetime.now().year) + str(datetime.datetime.now().month) + str(datetime.datetime.now().day)#用来给文件命名。
+    ITL = 0#用来协助遍历URL_SET的常量，用这个常量的原因是，用trip这个协程库之后，不太好往get_proxies()这个函数里面传参。应该可以改进。
+    #下面四个list是，如果最后需要传出一个包含 "IP PORT ASN ASNinfo" 所有信息的文件，这四个list分别用来装四项信息。
+    ASNinfolist = []
+    ASNlist = []
+    PORTlist = []
+    IPlist = [] 
+    valid_proxy = []#用来装可以用的代理。
+
     j = open('allproxy.txt', 'r')  # 这份文件中包含了上一次抓取所获得的代理。
     allproxy = j.readlines()  # 读。
-
     for n in range(0,len(URL_SET)):
         if ITL <= len(URL_SET)-2:
             trip.run(main)
-
     print(len(allproxy))
     trip.run(test_only)
-
     valid_proxy = list(set(valid_proxy))
     j.close()
-
+           
     f = open('allproxy.txt', 'w')
     for each in valid_proxy:
         f.write(each+'\n')
     f.close()
-
+           
     loop = asyncio.get_event_loop()
     tasks = [getASN(host) for host in IPlist]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.close()
+           
     IP_alive = pd.DataFrame({'IP': IPlist})
     Port_alive = pd.DataFrame({'PORT': PORTlist})
     ASN_alive = pd.DataFrame({'ASN': ASNlist})
