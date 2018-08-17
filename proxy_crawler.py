@@ -126,16 +126,16 @@ if __name__ == '__main__':
         f.write(each+'\n')
     f.close()
 
-    # loop = asyncio.get_event_loop()
-    # tasks = [getASN(host) for host in IPlist]
-    # loop.run_until_complete(asyncio.wait(tasks))
-    # loop.close()
-    # IP_alive = pd.DataFrame({'IP': IPlist})
-    # Port_alive = pd.DataFrame({'PORT': PORTlist})
-    # ASN_alive = pd.DataFrame({'ASN': ASNlist})
-    # ASN_alive_info = pd.DataFrame({'ASN_INFO': ASNinfolist})
-    # dfalive = [IP_alive, Port_alive, ASN_alive, ASN_alive_info]
-    # result = pd.concat(dfalive, axis=1)
-    # result.to_excel(localtime+str(n)+'.xlsx')
-    # result.to_csv(localtime+'.csv')
+    loop = asyncio.get_event_loop()
+    tasks = [getASN(host) for host in IPlist]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
+    IP_alive = pd.DataFrame({'IP': IPlist})
+    Port_alive = pd.DataFrame({'PORT': PORTlist})
+    ASN_alive = pd.DataFrame({'ASN': ASNlist})
+    ASN_alive_info = pd.DataFrame({'ASN_INFO': ASNinfolist})
+    dfalive = [IP_alive, Port_alive, ASN_alive, ASN_alive_info]
+    result = pd.concat(dfalive, axis=1)
+    result.to_excel(localtime+str(n)+'.xlsx')
+    result.to_csv(localtime+'.csv')
     print(time.time() - start_time)
